@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Տոմսերի Հաշվառում</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1b2330;--mut:#6b7686;--bd:#e2e7ee;--acc:#1f6feb;--ok:#14895a;--cash:#b7791f;--bad:#c93c3c}
+@media (prefers-color-scheme:dark){:root{--bg:#10141a;--card:#19202a;--tx:#e8edf4;--mut:#93a0b2;--bd:#2a3442;--acc:#4c8dff;--ok:#3cc28a;--cash:#e0a84a;--bad:#ff6b6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 14px}
+h2{font-size:16px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}}
+.st{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
+.st small{color:var(--mut);display:block;font-size:12px}
+.st b{font-size:19px;display:block;margin-top:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:3px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:15px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:14px;cursor:pointer}
+.seg button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.prev{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px}
+.prev div{display:flex;justify-content:space-between;padding:2px 0}
+.btn{padding:11px 16px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:15px;cursor:pointer}
+.btn.sec{background:transparent;color:var(--acc);border:1px solid var(--bd)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.list .it{border-bottom:1px solid var(--bd);padding:10px 0;display:flex;justify-content:space-between;gap:10px}
+.list .it:last-child{border:0}
+.it .m{color:var(--mut);font-size:12px}
+.tag{font-size:11px;padding:2px 7px;border-radius:20px;margin-left:4px}
+.tb{background:rgba(31,111,235,.12);color:var(--acc)}.tc{background:rgba(183,121,31,.15);color:var(--cash)}.tx{background:rgba(201,60,60,.12);color:var(--bad)}
+.r{text-align:right;white-space:nowrap}
+.del{background:none;border:0;color:var(--mut);cursor:pointer;font-size:13px;padding:4px 0 0}
+.ok{color:var(--ok)}.cs{color:var(--cash)}.bd{color:var(--bad)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>✈️ Տոմսերի վաճառքի հաշվառում</h1>
+
+<div class="row" style="margin-bottom:10px">
+  <label style="margin:0">Ամիս՝</label>
+  <input type="month" id="fMonth" style="width:auto">
+  <button class="btn sec" onclick="fMonth.value='';render()">Բոլորը</button>
+</div>
+
+<div class="stats">
+  <div class="st"><small>Հաշվի/քարտի մնացորդ</small><b id="sBank">0</b></div>
+  <div class="st"><small>Կանխիկ մնացորդ</small><b id="sCash">0</b></div>
+  <div class="st"><small>Ընդհանուր շահույթ</small><b class="ok" id="sProfit">0</b></div>
+  <div class="st"><small>Վաճառքներ</small><b id="sCount">0</b></div>
+</div>
+<div class="card" style="padding:12px 16px">
+  <div class="row" style="justify-content:space-between;font-size:14px">
+    <span>Շահույթ քարտին՝ <b class="ok" id="sPB">0</b></span>
+    <span>Շահույթ կանխիկ՝ <b class="cs" id="sPC">0</b></span>
+    <span>Շրջանառություն՝ <b id="sTurn">0</b></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="seg" style="margin-bottom:14px">
+    <button id="tSale" class="on" onclick="tab('sale')">Նոր վաճառք</button>
+    <button id="tMove" onclick="tab('move')">Ծախս / Հանում</button>
+  </div>
+
+  <div id="pSale">
+  <div class="grid">
+    <div><label>Ամսաթիվ</label><input type="date" id="date"></div>
+    <div><label>Ծառայություն</label>
+      <select id="svc"><option>Ավիատոմս</option><option>Հյուրանոց</option><option>Տուր</option><option>Վիզա</option><option>Ապահովագրություն</option><option>Այլ</option></select></div>
+    <div class="full"><label>Հաճախորդ / ուղղություն</label><input id="client" placeholder="օր.՝ Արամ Պետրոսյան, EVN–MOW"></div>
+    <div><label>Տոմսի գին (ինքնարժեք)</label><input type="number" inputmode="numeric" id="cost" placeholder="200000"></div>
+    <div><label>Հաճախորդին ասված գին</label><input type="number" inputmode="numeric" id="price" placeholder="220000"></div>
+    <div class="full"><label>Վճարման ձև</label>
+      <div class="seg"><button id="mBank" class="on" onclick="setMethod('bank')">Փոխանցում հաշվին</button><button id="mCash" onclick="setMethod('cash')">Կանխիկ</button></div></div>
+    <div class="full hide" id="depBox"><label>Կանխիկից քանի՞սն է մուծում հաշվին</label><input type="number" inputmode="numeric" id="dep" placeholder="205000"></div>
+    <div class="full prev" id="prev"></div>
+    <div class="full"><button class="btn" style="width:100%" onclick="addSale()">Պահպանել</button></div>
+  </div>
+  </div>
+
+  <div id="pMove" class="hide">
+  <div class="grid">
+    <div><label>Ամսաթիվ</label><input type="date" id="mDate"></div>
+    <div><label>Տեսակ</label>
+      <select id="mType"><option value="out">Ծախս / հանում</option><option value="in">Մուտք (համալրում)</option><option value="c2b">Կանխիկը մուծել հաշվին</option><option value="b2c">Հաշվից կանխիկացնել</option></select></div>
+    <div id="mFromBox"><label>Որտեղից/որտեղ</label><select id="mWhere"><option value="bank">Հաշիվ/քարտ</option><option value="cash">Կանխիկ</option></select></div>
+    <div><label>Գումար</label><input type="number" inputmode="numeric" id="mAmt"></div>
+    <div class="full"><label>Նկարագրություն</label><input id="mNote" placeholder="օր.՝ գրասենյակի վարձ"></div>
+    <div class="full"><button class="btn" style="width:100%" onclick="addMove()">Պահպանել</button></div>
+  </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Գործարքներ</h2>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="row" style="margin-bottom:30px">
+  <button class="btn sec" onclick="exportCSV()">Excel (CSV)</button>
+  <button class="btn sec" onclick="backup()">Պահուստ (backup)</button>
+  <button class="btn sec" onclick="imp.click()">Վերականգնել</button>
+  <input type="file" id="imp" accept=".json" class="hide" onchange="restore(this)">
+</div>
+</div>
+
+<script>
+const KEY='tomser_v1';let data=[],method='bank';
+try{data=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){data=[]}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){alert('Չհաջողվեց պահպանել')}};
+const n=v=>Math.round(+v||0);
+const f=v=>n(v).toLocaleString('ru-RU').replace(/,/g,' ')+' ֏';
+const today=()=>new Date().toISOString().slice(0,10);
+date.value=mDate.value=today();
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function tab(t){pSale.classList.toggle('hide',t!=='sale');pMove.classList.toggle('hide',t!=='move');tSale.classList.toggle('on',t==='sale');tMove.classList.toggle('on',t==='move')}
+function setMethod(m){method=m;mBank.classList.toggle('on',m==='bank');mCash.classList.toggle('on',m==='cash');depBox.classList.toggle('hide',m!=='cash');if(m==='cash'&&!dep.value)dep.value=cost.value;preview()}
+mType.onchange=()=>mFromBox.classList.toggle('hide',['c2b','b2c'].includes(mType.value));
+
+// Ինչպես է ազդում հաշվեկշիռների վրա
+function effect(t){
+  if(t.k==='sale'){
+    const profit=t.price-t.cost;
+    if(t.method==='bank') return {bank:t.price-t.cost,cash:0,profit,pBank:profit,pCash:0};
+    const d=t.dep; // կանխիկից մուծված
+    return {bank:d-t.cost,cash:t.price-d,profit,pBank:d-t.cost,pCash:t.price-d};
+  }
+  const a=t.amt;
+  if(t.type==='c2b')return{bank:a,cash:-a};
+  if(t.type==='b2c')return{bank:-a,cash:a};
+  const s=t.type==='in'?a:-a;
+  return t.where==='bank'?{bank:s,cash:0}:{bank:0,cash:s};
+}
+
+function preview(){
+  const c=n(cost.value),p=n(price.value);
+  if(!c||!p){prev.innerHTML='<span style="color:var(--mut)">Լրացրեք գները՝ հաշվարկը տեսնելու համար</span>';return}
+  const t={k:'sale',cost:c,price:p,method,dep:n(dep.value)};const e=effect(t);
+  let h=`<div><span>Շահույթ</span><b class="${e.profit>=0?'ok':'bd'}">${f(e.profit)}</b></div>`;
+  if(method==='bank'){
+    h+=`<div><span>Մուտք հաշվին</span><span>+${f(p)}</span></div><div><span>Վճարվում է տոմսի համար</span><span>−${f(c)}</span></div><div><span>Մնում է քարտին (շահույթ)</span><b class="ok">${f(e.bank)}</b></div>`;
+  }else{
+    h+=`<div><span>Ստացված կանխիկ</span><span>${f(p)}</span></div><div><span>Մուծվում է հաշվին</span><span>${f(t.dep)}</span></div><div><span>Վճարվում է տոմսի համար</span><span>−${f(c)}</span></div><div><span>Մնում է քարտին</span><b class="${e.bank>=0?'ok':'bd'}">${f(e.bank)}</b></div><div><span>Մնում է կանխիկ</span><b class="cs">${f(e.cash)}</b></div>`;
+    if(t.dep<c)h+=`<div class="bd">⚠ Մուծած գումարը տոմսի գնից պակաս է</div>`;
+  }
+  prev.innerHTML=h;
+}
+[cost,price,dep].forEach(i=>i.oninput=()=>{if(i===cost&&method==='cash'&&!dep.dataset.touched)dep.value=cost.value;preview()});
+dep.addEventListener('input',()=>dep.dataset.touched=1);
+
+function addSale(){
+  const c=n(cost.value),p=n(price.value);
+  if(!c||!p)return alert('Լրացրեք տոմսի գինը և հաճախորդի գինը');
+  const d=method==='cash'?n(dep.value):0;
+  if(method==='cash'&&d>p)return alert('Մուծվող գումարը չի կարող գերազանցել ստացված կանխիկը');
+  data.push({id:Date.now(),k:'sale',date:date.value||today(),svc:svc.value,client:client.value.trim(),cost:c,price:p,method,dep:d});
+  save();client.value=cost.value=price.value=dep.value='';delete dep.dataset.touched;preview();render();
+}
+function addMove(){
+  const a=n(mAmt.value);if(!a)return alert('Լրացրեք գումարը');
+  data.push({id:Date.now(),k:'move',date:mDate.value||today(),type:mType.value,where:mWhere.value,amt:a,note:mNote.value.trim()});
+  save();mAmt.value=mNote.value='';render();
+}
+function del(id){if(confirm('Ջնջե՞լ այս գործարքը')){data=data.filter(t=>t.id!==id);save();render()}}
+
+const moveName={out:'Ծախս',in:'Մուտք',c2b:'Կանխիկ → հաշիվ',b2c:'Հաշիվ → կանխիկ'};
+function render(){
+  const m=fMonth.value;
+  // մնացորդները միշտ ամբողջ պատմությամբ, շահույթը՝ ընտրված ամսով
+  let bank=0,cash=0;data.forEach(t=>{const e=effect(t);bank+=e.bank;cash+=e.cash});
+  const rows=data.filter(t=>!m||t.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  let pr=0,pb=0,pc=0,cnt=0,turn=0;
+  rows.forEach(t=>{if(t.k==='sale'){const e=effect(t);pr+=e.profit;pb+=e.pBank;pc+=e.pCash;cnt++;turn+=t.price}});
+  sBank.textContent=f(bank);sCash.textContent=f(cash);sProfit.textContent=f(pr);sCount.textContent=cnt;
+  sPB.textContent=f(pb);sPC.textContent=f(pc);sTurn.textContent=f(turn);
+  list.innerHTML=rows.length?rows.map(t=>{
+    if(t.k==='sale'){const e=effect(t);
+      return `<div class="it"><div><b>${esc(t.client)||esc(t.svc)}</b><span class="tag ${t.method==='bank'?'tb':'tc'}">${t.method==='bank'?'Փոխանցում':'Կանխիկ'}</span>
+      <div class="m">${t.date} · ${esc(t.svc)} · տոմս ${f(t.cost)} · գին ${f(t.price)}${t.method==='cash'?' · մուծվել է '+f(t.dep):''}</div>
+      <button class="del" onclick="del(${t.id})">ջնջել</button></div>
+      <div class="r"><b class="ok">+${f(e.profit)}</b><div class="m">${t.method==='cash'?'քարտ '+f(e.pBank)+' · կանխ. '+f(e.pCash):'քարտին'}</div></div></div>`}
+    const e=effect(t),neg=t.type==='out';
+    return `<div class="it"><div><b>${esc(t.note)||moveName[t.type]}</b><span class="tag tx">${moveName[t.type]}</span>
+      <div class="m">${t.date}${['in','out'].includes(t.type)?' · '+(t.where==='bank'?'հաշիվ':'կանխիկ'):''}</div>
+      <button class="del" onclick="del(${t.id})">ջնջել</button></div>
+      <div class="r"><b class="${neg?'bd':''}">${neg?'−':''}${f(t.amt)}</b></div></div>`;
+  }).join(''):'<div class="m" style="color:var(--mut)">Դեռ գործարքներ չկան</div>';
+}
+
+function dl(name,txt,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click()}
+function exportCSV(){
+  const h=['Ամսաթիվ','Տեսակ','Հաճախորդ/Նկարագր.','Վճարման ձև','Տոմսի գին','Վաճառքի գին','Մուծված հաշվին','Շահույթ','Շահույթ քարտին','Շահույթ կանխիկ','Գումար'];
+  const r=data.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>{
+    if(t.k==='sale'){const e=effect(t);return[t.date,t.svc,t.client,t.method==='bank'?'Փոխանցում':'Կանխիկ',t.cost,t.price,t.method==='bank'?t.price:t.dep,e.profit,e.pBank,e.pCash,'']}
+    return[t.date,moveName[t.type],t.note,t.where==='bank'?'Հաշիվ':'Կանխիկ','','','','','','',t.type==='out'?-t.amt:t.amt]});
+  dl('tomser.csv','﻿'+[h,...r].map(x=>x.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n'),'text/csv');
+}
+function backup(){dl('tomser-backup-'+today()+'.json',JSON.stringify(data),'application/json')}
+function restore(inp){const fl=inp.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d))throw 0;if(confirm('Փոխարինե՞լ ներկայիս տվյալները պահուստով')){data=d;save();render()}}catch(e){alert('Ֆայլը սխալ է')}};r.readAsText(fl);inp.value=''}
+
+preview();render();
+</script>
+</body>
+</html>
